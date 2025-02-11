@@ -1,9 +1,17 @@
 import fetch from 'node-fetch';
-import { createObjectCsvWriter } from 'csv-writer';
 
-const orgName = 'Profuturo-Prestamos';
-const githubToken = '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';
-const searchQuery = 'jdbc/clienteUnico'; // Texto a buscar
+// Aquí pasas directamente el token de GitHub
+const githubToken = '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';  // Reemplaza con tu token de GitHub
+
+const orgName = process.argv[2];  // Recibe el nombre de la organización desde el frontend
+const searchQuery = process.argv[3];  // Recibe la palabra de búsqueda desde el frontend
+
+// Comprobar si los parámetros son válidos
+if (!orgName || !searchQuery) {
+    console.error("Se requiere una organización y un término de búsqueda.");
+    process.exit(1);  // Salir si no se proporcionan los datos
+}
+
 const perPage = 100;
 let requestCount = 0;
 
@@ -35,7 +43,7 @@ async function fetchWithRateLimitCheck(url) {
 async function searchInRepositories() {
     let page = 1;
     let hasNextPage = true;
-    const foundRepos = new Set();
+    const foundRepos = [];
     
     while (hasNextPage) {
         const apiUrl = `https://api.github.com/search/code?q=${encodeURIComponent(searchQuery)}+org:${orgName}&per_page=${perPage}&page=${page}`;
@@ -49,7 +57,7 @@ async function searchInRepositories() {
             if (result.items.length === 0) {
                 hasNextPage = false;
             } else {
-                result.items.forEach(item => foundRepos.add(item.repository.full_name));
+                result.items.forEach(item => foundRepos.push(item.repository.full_name));
                 page++;
             }
         } catch (error) {
@@ -58,14 +66,28 @@ async function searchInRepositories() {
         }
     }
 
-    const csvWriter = createObjectCsvWriter({
-        path: `search_results_${orgName}.csv`,
-        header: [{ id: 'repository', title: 'Repositorio' }]
-    });
-    await csvWriter.writeRecords([...foundRepos].map(repo => ({ repository: repo })));
-    
-    console.log(`Búsqueda completada. Resultados guardados en search_results_${orgName}.csv`);
-    console.log(`Número total de peticiones a GitHub: ${requestCount}`);
+    // Mostrar los resultados en el frontend
+    displayResults(foundRepos);
 }
 
+function displayResults(repositories) {
+    const resultsContainer = document.getElementById("resultados"); // El contenedor donde mostrar los resultados
+
+    // Limpiar resultados previos
+    resultsContainer.innerHTML = '';
+
+    if (repositories.length > 0) {
+        const ul = document.createElement('ul');
+        repositories.forEach(repo => {
+            const li = document.createElement('li');
+            li.textContent = repo;  // Mostrar el nombre completo del repositorio
+            ul.appendChild(li);
+        });
+        resultsContainer.appendChild(ul);
+    } else {
+        resultsContainer.textContent = "No se encontraron resultados para la búsqueda.";
+    }
+}
+
+// Llamar a la función de búsqueda
 searchInRepositories();
