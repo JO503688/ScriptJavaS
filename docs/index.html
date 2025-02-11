@@ -4,50 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buscar en Repositorios</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        label, input {
+            display: block;
+            margin-bottom: 10px;
+        }
+        #resultados {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Buscar en Repositorios de GitHub</h1>
+
+    <h1>Buscar Repositorios en GitHub</h1>
+
     <form id="searchForm">
-        <label for="org">Organización:</label>
-        <input type="text" id="org" required>
-        <br><br>
+        <label for="org">Nombre de la organización:</label>
+        <input type="text" id="org" placeholder="Ingresa el nombre de la organización" required>
+        
         <label for="query">Término de búsqueda:</label>
-        <input type="text" id="query" required>
-        <br><br>
+        <input type="text" id="query" placeholder="Ingresa el término de búsqueda" required>
+        
         <button type="submit">Buscar</button>
     </form>
 
     <div id="resultados"></div>
 
-    <script src="buscar.mjs" type="module"></script>
-
     <script>
-        document.getElementById("searchForm").addEventListener("submit", async (event) => {
-            event.preventDefault();  // Evitar que el formulario se envíe tradicionalmente
-            const org = document.getElementById("org").value;
-            const query = document.getElementById("query").value;
-            
-            if (!org || !query) return alert("Escribe la organización y el término de búsqueda.");
-            
-            // Llamar al script de búsqueda pasando los datos
-            const response = await fetch(`https://api.github.com/repos/JO503688/ScriptJavaS/dispatches`, {
-                method: "POST",
-                headers: {
-                    "Accept": "application/vnd.github.everest-preview+json",
-                    "Authorization": "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"
-                },
-                body: JSON.stringify({
-                    event_type: "buscar",
-                    client_payload: { org, query }
-                })
-            });
+        // Definimos la función 'buscar'
+        async function buscar() {
+            const org = document.getElementById('org').value;
+            const query = document.getElementById('query').value;
 
-            if (response.ok) {
-                document.getElementById("resultados").textContent = "Búsqueda en proceso, revisa en unos minutos.";
-            } else {
-                document.getElementById("resultados").textContent = "Error al iniciar la búsqueda.";
+            if (!org || !query) return alert("Escribe la organización y el término de búsqueda.");
+
+            document.getElementById("resultados").textContent = "Buscando...";
+
+            console.log(`Enviando solicitud con: org = ${org}, query = ${query}`);  // Debugging
+
+            try {
+                // Disparar la GitHub Action usando fetch
+                const response = await fetch('https://api.github.com/repos/TU-USUARIO/TU-REPO/dispatches', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/vnd.github.everest-preview+json',
+                        'Authorization': 'token TU_TOKEN_PERSONAL',  // Sustituye con tu token personal
+                    },
+                    body: JSON.stringify({
+                        event_type: 'buscar',  // Asegúrate de que coincida con el evento del .yml
+                        client_payload: { org, query }  // Los datos que pasas al backend
+                    })
+                });
+
+                // Verificar si la respuesta es exitosa
+                if (response.ok) {
+                    document.getElementById("resultados").textContent = "Búsqueda en proceso, revisa en unos minutos.";
+                } else {
+                    document.getElementById("resultados").textContent = "Error al iniciar la búsqueda.";
+                    const errorResponse = await response.json();
+                    console.error('Detalles del error:', errorResponse);  // Mostrar más detalles en consola si ocurre un error
+                }
+            } catch (error) {
+                console.error("Hubo un problema al intentar activar la acción de GitHub:", error);
+                document.getElementById("resultados").textContent = "Hubo un problema al iniciar la búsqueda.";
             }
+        }
+
+        // Añadir el listener para el evento submit del formulario
+        document.getElementById("searchForm").addEventListener("submit", async function(event) {
+            event.preventDefault();  // Evitar que el formulario se envíe de manera tradicional
+
+            await buscar();  // Llamar a la función 'buscar' al hacer submit
         });
     </script>
+
 </body>
 </html>
