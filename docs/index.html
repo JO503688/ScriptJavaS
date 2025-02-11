@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Repositorios</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+        input { padding: 10px; width: 300px; }
+        button { padding: 10px 20px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Buscar en Repositorios</h1>
+    <input type="text" id="query" placeholder="Escribe lo que buscas...">
+    <button onclick="buscar()">Buscar</button>
+    <pre id="resultados"></pre>
+
+    <script>
+        async function buscar() {
+            const query = document.getElementById('query').value;
+            if (!query) return alert("Escribe algo para buscar.");
+            
+            document.getElementById("resultados").textContent = "Buscando...";
+
+            // Llamada a tu API o GitHub Action (ajústalo a tu backend)
+            const response = await fetch(`https://api.github.com/search/code?q=${query}+in:file+repo:turepo`);
+            const data = await response.json();
+
+            document.getElementById("resultados").textContent = JSON.stringify(data, null, 2);
+        }
+    </script>
+</body>
+</html>
