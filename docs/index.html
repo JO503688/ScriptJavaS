@@ -22,15 +22,29 @@
         async function buscar() {
             const org = document.getElementById('org').value;
             const query = document.getElementById('query').value;
-
+        
             if (!org || !query) return alert("Escribe la organización y el término de búsqueda.");
             
             document.getElementById("resultados").textContent = "Buscando...";
-
-            const response = await fetch(`https://api.github.com/repos/${org}/busqueda?query=${query}`);
-            const data = await response.json();
-
-            document.getElementById("resultados").textContent = JSON.stringify(data, null, 2);
+        
+            // Disparar la GitHub Action
+            const response = await fetch(`https://api.github.com/repos/TU-USUARIO/TU-REPO/dispatches`, {
+                method: "POST",
+                headers: {
+                    "Accept": "application/vnd.github.everest-preview+json",
+                    "Authorization": "token TU_TOKEN_PERSONAL"
+                },
+                body: JSON.stringify({
+                    event_type: "buscar",
+                    client_payload: { org, query }
+                })
+            });
+        
+            if (response.ok) {
+                document.getElementById("resultados").textContent = "Búsqueda en proceso, revisa en unos minutos.";
+            } else {
+                document.getElementById("resultados").textContent = "Error al iniciar la búsqueda.";
+            }
         }
     </script>
 </body>
