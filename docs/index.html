@@ -52,7 +52,7 @@
                     method: 'POST',
                     headers: {
                         'Accept': 'application/vnd.github.everest-preview+json',
-                        'Authorization': process.env.TOKEN,  // No deberías poner el token aquí
+                        'Authorization': 'token' + process.env.TOKEN,  // No deberías poner el token aquí
                     },
                     body: JSON.stringify({
                         event_type: 'buscar',  // Asegúrate de que coincida con el evento del .yml
