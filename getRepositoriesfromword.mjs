@@ -1,57 +1,60 @@
-import fetch from 'node-fetch';
+import express from 'express';
+import fetch from 'node-fetch';   // Para hacer las solicitudes a la API de GitHub
+import dotenv from 'dotenv';     // Para manejar las variables de entorno
 
-// Aquí pasas directamente el token de GitHub
-const githubToken = process.env.TOKEN;  // Reemplaza con tu token de GitHub
+dotenv.config();  // Cargar las variables de entorno, asegurate de que GITHUB_TOKEN esté en el archivo .env
 
-const orgName = process.argv[2];  // Recibe el nombre de la organización desde el frontend
-const searchQuery = process.argv[3];  // Recibe la palabra de búsqueda desde el frontend
+const app = express();
+const port = process.env.PORT || 3000;
 
-// Comprobar si los parámetros son válidos
-if (!orgName || !searchQuery) {
-    console.error("Se requiere una organización y un término de búsqueda.");
-    process.exit(1);  // Salir si no se proporcionan los datos
-}
+// Usamos un token de GitHub guardado como variable de entorno
+const githubToken = process.env.TOKEN;  // Asegúrate de que el token esté en el archivo .env
 
-const perPage = 100;
-let requestCount = 0;
+// Habilitar para recibir JSON
+app.use(express.json());
+app.use(express.static('public'));  // Directorio donde está tu archivo HTML
 
+// Función para hacer las búsquedas en los repositorios
 async function fetchWithRateLimitCheck(url) {
     let response = await fetch(url, {
         headers: { Authorization: `token ${githubToken}` }
     });
-    requestCount++;
 
     if (response.status === 403) {
         const rateLimitResponse = await fetch('https://api.github.com/rate_limit', {
             headers: { Authorization: `token ${githubToken}` }
         });
-        requestCount++;
         const rateLimitData = await rateLimitResponse.json();
         const resetTime = rateLimitData.rate.reset;
         const currentTime = Math.floor(Date.now() / 1000);
         const waitTime = resetTime - currentTime;
         if (waitTime > 0) {
-            console.log(`Límite de tasa alcanzado. Esperando ${waitTime} segundos para reanudar...`);
+            console.log(`Límite de tasa alcanzado. Esperando ${waitTime} segundos...`);
             await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
         }
         response = await fetch(url, { headers: { Authorization: `token ${githubToken}` } });
-        requestCount++;
     }
     return response;
 }
 
-async function searchInRepositories() {
+// Endpoint que maneja la búsqueda
+app.post('/buscar', async (req, res) => {
+    const { org, query } = req.body;
+
+    if (!org || !query) {
+        return res.status(400).json({ error: 'Faltan parámetros de organización o término de búsqueda.' });
+    }
+
+    const perPage = 100;
     let page = 1;
     let hasNextPage = true;
     const foundRepos = [];
-    
+
     while (hasNextPage) {
-        const apiUrl = `https://api.github.com/search/code?q=${encodeURIComponent(searchQuery)}+org:${orgName}&per_page=${perPage}&page=${page}`;
+        const apiUrl = `https://api.github.com/search/code?q=${encodeURIComponent(query)}+org:${org}&per_page=${perPage}&page=${page}`;
+        
         try {
             const response = await fetchWithRateLimitCheck(apiUrl);
-            if (!response.ok) {
-                throw new Error(`Error en la búsqueda. Código de estado: ${response.status}`);
-            }
             const result = await response.json();
             
             if (result.items.length === 0) {
@@ -61,33 +64,16 @@ async function searchInRepositories() {
                 page++;
             }
         } catch (error) {
-            console.error('Ocurrió un error:', error.message);
+            console.error('Error al buscar en los repositorios:', error.message);
             hasNextPage = false;
         }
     }
 
-    // Mostrar los resultados en el frontend
-    displayResults(foundRepos);
-}
+    // Enviar la respuesta con los repositorios encontrados
+    res.json(foundRepos);
+});
 
-function displayResults(repositories) {
-    const resultsContainer = document.getElementById("resultados"); // El contenedor donde mostrar los resultados
-
-    // Limpiar resultados previos
-    resultsContainer.innerHTML = '';
-
-    if (repositories.length > 0) {
-        const ul = document.createElement('ul');
-        repositories.forEach(repo => {
-            const li = document.createElement('li');
-            li.textContent = repo;  // Mostrar el nombre completo del repositorio
-            ul.appendChild(li);
-        });
-        resultsContainer.appendChild(ul);
-    } else {
-        resultsContainer.textContent = "No se encontraron resultados para la búsqueda.";
-    }
-}
-
-// Llamar a la función de búsqueda
-searchInRepositories();
+// Iniciar el servidor en el puerto especificado
+app.listen(port, () => {
+    console.log(`Servidor backend escuchando en http://localhost:${port}`);
+});
