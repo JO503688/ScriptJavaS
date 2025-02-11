@@ -3,20 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscar en Repositorios</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        label, input {
-            display: block;
-            margin-bottom: 10px;
-        }
-        #resultados {
-            margin-top: 20px;
-        }
-    </style>
+    <title>Buscar en Repositorios de GitHub</title>
 </head>
 <body>
 
@@ -29,13 +16,12 @@
         <label for="query">Término de búsqueda:</label>
         <input type="text" id="query" placeholder="Ingresa el término de búsqueda" required>
         
-        <button type="submit" onclic="buscar">Buscar</button>
+        <button type="submit">Buscar</button>
     </form>
 
     <div id="resultados"></div>
 
     <script>
-        // Definimos la función 'buscar'
         async function buscar() {
             const org = document.getElementById('org').value;
             const query = document.getElementById('query').value;
@@ -44,30 +30,30 @@
 
             document.getElementById("resultados").textContent = "Buscando...";
 
-            console.log(`Enviando solicitud con: org = ${org}, query = ${query}`);  // Debugging
-
             try {
-                // Disparar la GitHub Action usando fetch
+                // Realizar la solicitud POST a GitHub API para disparar la GitHub Action
                 const response = await fetch('https://api.github.com/repos/JO503688/ScriptJavaS/dispatches', {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/vnd.github.everest-preview+json',
-                        'Authorization': 'token' + process.env.TOKEN,  // No deberías poner el token aquí
+                        'Authorization': `Bearer ${process.env.TOKEN}`, // Se utilizará el token de GitHub (configurado como secreto en GitHub Actions)
                     },
                     body: JSON.stringify({
-                        event_type: 'buscar',  // Asegúrate de que coincida con el evento del .yml
-                        client_payload: { org, query }  // Los datos que pasas al backend
+                        event_type: 'buscar', // Tipo de evento para iniciar la acción
+                        client_payload: { org, query } // Pasar los parámetros org y query al backend
                     })
                 });
-                console.log(process.env.TOKEN);
 
                 // Verificar si la respuesta es exitosa
                 if (response.ok) {
-                    document.getElementById("resultados").textContent = "Búsqueda en proceso, revisa en unos minutos.";
+                    document.getElementById("resultados").textContent = "Búsqueda
+                                        // Verificar si la respuesta es exitosa
+                if (response.ok) {
+                    document.getElementById("resultados").textContent = "Búsqueda en proceso...";
                 } else {
                     document.getElementById("resultados").textContent = "Error al iniciar la búsqueda.";
                     const errorResponse = await response.json();
-                    console.error('Detalles del error:', errorResponse);  // Mostrar más detalles en consola si ocurre un error
+                    console.error('Detalles del error:', errorResponse);  // Mostrar detalles del error en consola si ocurre
                 }
             } catch (error) {
                 console.error("Hubo un problema al intentar activar la acción de GitHub:", error);
