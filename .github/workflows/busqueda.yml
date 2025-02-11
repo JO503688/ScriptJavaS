@@ -1,0 +1,31 @@
+name: Buscar en Repositorios
+
+on:
+  repository_dispatch:
+    types: [buscar]
+
+jobs:
+  ejecutar_busqueda:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: Instalar dependencias de Node.js
+        run: |
+          npm init -y  # Crear package.json si no existe
+          npm install node-fetch@2 csv-writer  # Instalar las dependencias necesarias
+
+      - name: Ejecutar el script de búsqueda
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node buscar.mjs ${{ github.event.client_payload.org }} ${{ github.event.client_payload.query }}
+
+      - name: Subir resultados
+        run: |
+          echo "resultados=$(cat resultados.json)" >> $GITHUB_ENV
