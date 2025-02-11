@@ -21,7 +21,7 @@ jobs:
 
       - name: Ejecutar el script de búsqueda
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Aquí no es necesario el token si lo pasamos de forma explícita
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}  # Aquí no es necesario el token si lo pasamos de forma explícita
         run: node buscar.mjs ${{ github.event.client_payload.org }} ${{ github.event.client_payload.query }}
 
       - name: Subir resultados
