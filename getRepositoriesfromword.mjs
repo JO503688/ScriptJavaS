@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 
 // Aquí pasas directamente el token de GitHub
-const githubToken = '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';  // Reemplaza con tu token de GitHub
+const githubToken = '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';  // Reemplaza con tu token de GitHub
 
 const orgName = process.argv[2];  // Recibe el nombre de la organización desde el frontend
 const searchQuery = process.argv[3];  // Recibe la palabra de búsqueda desde el frontend
