@@ -59,6 +59,7 @@
                         client_payload: { org, query }  // Los datos que pasas al backend
                     })
                 });
+                console.log(process.env.TOKEN);
 
                 // Verificar si la respuesta es exitosa
                 if (response.ok) {
