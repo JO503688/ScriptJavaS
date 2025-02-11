@@ -12,20 +12,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '20'
 
-      - name: Instalar dependencias de Node.js
-        run: |
-          npm init -y  # Crear package.json si no existe
-          npm install node-fetch@2 csv-writer  # Instalar las dependencias necesarias
+      - name: Instalar dependencias
+        run: npm install
 
       - name: Ejecutar el script de búsqueda
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Aquí no es necesario el token si lo pasamos de forma explícita
         run: node buscar.mjs ${{ github.event.client_payload.org }} ${{ github.event.client_payload.query }}
 
       - name: Subir resultados
         run: |
-          echo "resultados=$(cat resultados.json)" >> $GITHUB_ENV
+          echo "::set-output name=resultados::$(cat resultados.json)"
