@@ -13,6 +13,8 @@ on:
 jobs:
   search:
     runs-on: ubuntu-latest
+    env:
+      TOKEN: ${{ secrets.TOKEN }}  # Define el token a nivel del job
 
     steps:
       - name: Checkout del repositorio
@@ -26,16 +28,12 @@ jobs:
       - name: Instalar dependencias
         run: npm install
 
-      - name: Ejecutar búsqueda con cURL
-        env:
-          TOKEN: ${{ secrets.TOKEN }}
+      - name: Obtener lista de repositorios
         run: |
-          curl -H "Authorization: Bearer $TOKEN" \
+          curl -H "Authorization: token $TOKEN" \
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/orgs/${{ github.event.inputs.organizacion }}/repos > repositorios.json
 
       - name: Ejecutar script de búsqueda
-        env:
-          TOKEN: ${{ secrets.TOKEN }}
         run: |
           node buscar.mjs "${{ github.event.inputs.organizacion }}" "${{ github.event.inputs.query }}"
