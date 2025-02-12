@@ -1,4 +1,3 @@
-import { writeFile } from "fs/promises";
 import fetch from "node-fetch";
 
 // Obtener el token desde las variables de entorno
@@ -38,14 +37,14 @@ async function buscarEnRepos(organizacion, query) {
             }
         }
 
-        console.log("Repositorios donde se encontró la coincidencia:", resultados);
-
-        // Guardar resultados en un archivo CSV
-        const csvContent = "Repositorio\n" + resultados.join("\n");
-        await writeFile("resultados.csv", csvContent);
-        console.log("Resultados guardados en resultados.csv");
+        console.log("🔍 Repositorios donde se encontró la coincidencia:");
+        if (resultados.length > 0) {
+            resultados.forEach(repo => console.log(`✅ ${repo}`));
+        } else {
+            console.log("❌ No se encontraron coincidencias.");
+        }
     } catch (error) {
-        console.error("Error en la búsqueda:", error.message);
+        console.error("❌ Error en la búsqueda:", error.message);
     }
 }
 
