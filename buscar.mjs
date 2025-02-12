@@ -1,32 +1,59 @@
 import { writeFile } from "fs/promises";
 import fetch from "node-fetch";
 
-const GITHUB_TOKEN = process.env.TOKEN;
+// Obtener el token desde las variables de entorno
+const TOKEN = process.env.TOKEN;
 
-async function buscarEnRepos(org, query) {
-    const url = `https://api.github.com/search/code?q=${query}+org:${org}`;
-    const headers = { "Authorization": `token ${TOKEN}` };
-    
-    const response = await fetch(url, { headers });
-    if (!response.ok) {
-        console.error("Error en la búsqueda:", response.status);
-        return { error: "No se pudo realizar la búsqueda" };
+if (!TOKEN) {
+    console.error("Error: TOKEN no está definido.");
+    process.exit(1);
+}
+
+async function buscarEnRepos(organizacion, query) {
+    const url = `https://api.github.com/orgs/${organizacion}/repos`;
+    const headers = { 
+        "Authorization": `Bearer ${TOKEN}`,
+        "Accept": "application/vnd.github.v3+json"
+    };
+
+    try {
+        const response = await fetch(url, { headers });
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+        }
+
+        const repos = await response.json();
+        const resultados = [];
+
+        for (const repo of repos) {
+            const contenidoUrl = `https://api.github.com/repos/${organizacion}/${repo.name}/contents`;
+            const contenidoResponse = await fetch(contenidoUrl, { headers });
+
+            if (!contenidoResponse.ok) continue; 
+
+            const archivos = await contenidoResponse.json();
+            if (archivos.some(archivo => archivo.name.includes(query))) {
+                resultados.push(repo.name);
+            }
+        }
+
+        console.log("Repositorios donde se encontró la coincidencia:", resultados);
+
+        // Guardar resultados en un archivo CSV
+        const csvContent = "Repositorio\n" + resultados.join("\n");
+        await writeFile("resultados.csv", csvContent);
+        console.log("Resultados guardados en resultados.csv");
+    } catch (error) {
+        console.error("Error en la búsqueda:", error.message);
     }
-    
-    const data = await response.json();
-    return data.items ? data.items.map(item => item.repository.full_name) : [];
 }
 
-async function main() {
-    const org = process.argv[2];
-    const query = process.argv[3];
-
-    console.log(`🔍 Buscando "${query}" en la organización "${org}"...`);
-
-    const resultados = await buscarEnRepos(org, query);
-    
-    await writeFile("resultados.json", JSON.stringify(resultados, null, 2));
-    console.log("✅ Resultados guardados en resultados.json");
+const args = process.argv.slice(2);
+if (args.length < 2) {
+    console.error("Uso: node buscar.mjs <organizacion> <query>");
+    process.exit(1);
 }
 
-main();
+const [organizacion, query] = args;
+buscarEnRepos(organizacion, query);
