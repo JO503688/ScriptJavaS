@@ -1,1 +1,13 @@
-
+{
+  "name": "github-search",
+  "version": "1.0.0",
+  "description": "Proyecto para buscar coincidencias en repositorios de una organización en GitHub",
+  "type": "module",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.1"
+  }
+}
