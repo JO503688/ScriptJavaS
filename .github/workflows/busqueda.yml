@@ -38,4 +38,4 @@ jobs:
         env:
           TOKEN: ${{ secrets.TOKEN }}
         run: |
-          node busqueda.mjs "${{ github.event.inputs.organizacion }}" "${{ github.event.inputs.query }}"
+          node buscar.mjs "${{ github.event.inputs.organizacion }}" "${{ github.event.inputs.query }}"
