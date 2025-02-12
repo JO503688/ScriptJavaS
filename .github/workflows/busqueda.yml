@@ -1,35 +1,33 @@
-name: Buscar Repositorios
+name: Buscar en Repositorios
 
 on:
-  workflow_dispatch:
-    inputs:
-      org:
-        description: 'Nombre de la organización'
-        required: true
-        type: string
-      query:
-        description: 'Término de búsqueda'
-        required: true
-        type: string
+  repository_dispatch:
+    types: [buscar]
 
 jobs:
-  buscar_repositorios:
+  ejecutar_busqueda:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: 18
 
-      - name: Install dependencies
-        run: |
-          npm install dotenv node-fetch
+      - name: Instalar dependencias
+        run: npm install node-fetch
 
-      - name: Run backend script
-        run: |
-          node backend.mjs ${{ github.event.inputs.org }} ${{ github.event.inputs.query }}
+      - name: Ejecutar el script de búsqueda
         env:
-          TOKEN: ${{ secrets.TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        run: node scripts/buscar.mjs "${{ github.event.client_payload.org }}" "${{ github.event.client_payload.query }}"
+
+      - name: Subir resultados al repo
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions@github.com"
+          git add resultados.json
+          git commit -m "Actualizar resultados de búsqueda"
+          git push
