@@ -3,36 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscar en Repositorios de GitHub</title>
+    <title>Búsqueda en Repositorios</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 50px;
-        }
-        input, button {
-            margin: 5px;
-            padding: 10px;
-            font-size: 16px;
-        }
-        #resultados {
-            margin-top: 20px;
-            font-weight: bold;
-        }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        label, input, button { display: block; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f4f4f4; }
     </style>
 </head>
 <body>
 
-    <h2>Buscar en Repositorios de GitHub</h2>
-    <label for="org">Nombre de la Organización:</label>
-    <input type="text" id="org" placeholder="Ejemplo: mi-organizacion">
-    
-    <label for="query">Término de Búsqueda:</label>
-    <input type="text" id="query" placeholder="Ejemplo: package.json">
-    
+    <h2>Búsqueda en Repositorios de GitHub</h2>
+
+    <label for="org">Organización:</label>
+    <input type="text" id="org" placeholder="Ejemplo: tu-org">
+
+    <label for="query">Texto a buscar:</label>
+    <input type="text" id="query" placeholder="Ejemplo: const token">
+
     <button onclick="buscar()">Buscar</button>
-    
-    <p id="resultados"></p>
+
+    <h3>Resultados:</h3>
+    <table id="resultados">
+        <thead>
+            <tr>
+                <th>Repositorio</th>
+                <th>Archivo</th>
+                <th>Enlace</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
     <script>
         async function buscar() {
@@ -40,29 +42,54 @@
             const query = document.getElementById('query').value.trim();
             
             if (!org || !query) {
-                alert("Por favor, ingresa la organización y el término de búsqueda.");
+                alert("Debes ingresar la organización y el texto a buscar.");
                 return;
             }
 
-            document.getElementById("resultados").textContent = "Buscando en GitHub...";
+            // Llamar a GitHub Actions
+            const githubActionsUrl = `https://api.github.com/repos/JO503688/ScriptJavaS/actions/workflows/busqueda.yml/dispatches`;
 
-            const response = await fetch(`https://api.github.com/repos/JO503688/ScriptJavaS/actions/workflows/busqueda.yml/dispatches`, {
+            const response = await fetch(githubActionsUrl, {
                 method: "POST",
                 headers: {
                     "Accept": "application/vnd.github.v3+json",
-                    "Authorization": "Bearer ${TOKEN}", 
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     ref: "main",  // Rama donde está el workflow
-                    inputs: { org, query }
+                    inputs: { organizacion: org, query: query }
                 })
             });
 
             if (response.ok) {
-                document.getElementById("resultados").textContent = "Búsqueda en proceso... Espera unos minutos.";
+                alert("Búsqueda iniciada. Espera unos segundos y luego revisa los resultados.");
+                setTimeout(() => cargarResultados(), 5000); // Esperar antes de cargar resultados
             } else {
-                document.getElementById("resultados").textContent = "Error al iniciar la búsqueda.";
+                alert("Error al iniciar la búsqueda. Revisa tu configuración.");
+            }
+        }
+
+        async function cargarResultados() {
+            const resultadosUrl = `https://TU_USUARIO.github.io/ScriptJavaS/resultados.json`;
+
+            try {
+                const response = await fetch(resultadosUrl);
+                const data = await response.json();
+                
+                const tabla = document.getElementById('resultados').getElementsByTagName('tbody')[0];
+                tabla.innerHTML = "";  // Limpiar tabla
+
+                data.forEach(({ repo, file, url }) => {
+                    const fila = `<tr>
+                        <td>${repo}</td>
+                        <td>${file}</td>
+                        <td><a href="${url}" target="_blank">Ver</a></td>
+                    </tr>`;
+                    tabla.innerHTML += fila;
+                });
+            } catch (error) {
+                console.error("Error cargando resultados:", error);
+                alert("No se encontraron resultados o aún no están disponibles.");
             }
         }
     </script>
