@@ -3,63 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscar en Repositorios</title>
+    <title>Buscar en Repositorios de GitHub</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
-        input { padding: 10px; width: 300px; margin: 5px; }
-        button { padding: 10px 20px; margin-top: 10px; }
-        pre { text-align: left; white-space: pre-wrap; word-wrap: break-word; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        input, button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #resultados {
+            margin-top: 20px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <h1>Buscar en Repositorios</h1>
-    <input type="text" id="org" placeholder="Nombre de la organización">
-    <input type="text" id="query" placeholder="Escribe lo que buscas...">
+
+    <h2>Buscar en Repositorios de GitHub</h2>
+    <label for="org">Nombre de la Organización:</label>
+    <input type="text" id="org" placeholder="Ejemplo: mi-organizacion">
+    
+    <label for="query">Término de Búsqueda:</label>
+    <input type="text" id="query" placeholder="Ejemplo: package.json">
+    
     <button onclick="buscar()">Buscar</button>
-    <h2>Resultados:</h2>
-    <pre id="resultados">Esperando búsqueda...</pre>
+    
+    <p id="resultados"></p>
 
     <script>
         async function buscar() {
-            const org = document.getElementById('org').value;
-            const query = document.getElementById('query').value;
+            const org = document.getElementById('org').value.trim();
+            const query = document.getElementById('query').value.trim();
             
             if (!org || !query) {
                 alert("Por favor, ingresa la organización y el término de búsqueda.");
                 return;
             }
-            
+
             document.getElementById("resultados").textContent = "Buscando en GitHub...";
-            
-            const response = await fetch(`https://api.github.com/repos/JO503688/ScriptJavaS/dispatches`, {
+
+            const response = await fetch(`https://api.github.com/repos/JO503688/ScriptJavaS/actions/workflows/busqueda.yml/dispatches`, {
                 method: "POST",
                 headers: {
-                    "Accept": "application/vnd.github.everest-preview+json",
-                    "Content-Type": "application/json",
+                    "Accept": "application/vnd.github.v3+json",
+                    "Authorization": "Bearer TOKEN", 
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    event_type: "buscar",
-                    client_payload: { org, query }
+                    ref: "main",  // Rama donde está el workflow
+                    inputs: { org, query }
                 })
             });
-            
+
             if (response.ok) {
                 document.getElementById("resultados").textContent = "Búsqueda en proceso... Espera unos minutos.";
             } else {
                 document.getElementById("resultados").textContent = "Error al iniciar la búsqueda.";
             }
         }
-            // Espera unos segundos y luego consulta el archivo JSON con los resultados
-            setTimeout(async () => {
-                const resultResponse = await fetch("https://raw.githubusercontent.com/JO503688/ScriptJavaS/main/resultados.json");
-                if (resultResponse.ok) {
-                    const data = await resultResponse.json();
-                    document.getElementById("resultados").textContent = JSON.stringify(data, null, 2);
-                } else {
-                    document.getElementById("resultados").textContent = "Aún no hay resultados.";
-                }
-            }, 10000);  // Espera 10 segundos antes de consultar los resultados
-        }
     </script>
+
 </body>
 </html>
