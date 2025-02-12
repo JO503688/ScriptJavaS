@@ -1,6 +1,5 @@
 import fetch from "node-fetch";
 
-// Obtener el token desde las variables de entorno
 const TOKEN = process.env.TOKEN;
 
 if (!TOKEN) {
@@ -8,6 +7,7 @@ if (!TOKEN) {
     process.exit(1);
 }
 
+// Función para buscar en los repositorios
 async function buscarEnRepos(organizacion, query) {
     const url = `https://api.github.com/orgs/${organizacion}/repos`;
     const headers = { 
@@ -29,7 +29,7 @@ async function buscarEnRepos(organizacion, query) {
             const contenidoUrl = `https://api.github.com/repos/${organizacion}/${repo.name}/contents`;
             const contenidoResponse = await fetch(contenidoUrl, { headers });
 
-            if (!contenidoResponse.ok) continue; 
+            if (!contenidoResponse.ok) continue;
 
             const archivos = await contenidoResponse.json();
             if (archivos.some(archivo => archivo.name.includes(query))) {
@@ -37,20 +37,17 @@ async function buscarEnRepos(organizacion, query) {
             }
         }
 
-        console.log("🔍 Repositorios donde se encontró la coincidencia:");
-        if (resultados.length > 0) {
-            resultados.forEach(repo => console.log(`✅ ${repo}`));
-        } else {
-            console.log("❌ No se encontraron coincidencias.");
-        }
+        // ✅ Enviar resultado en formato JSON
+        console.log(JSON.stringify({ encontrados: resultados }, null, 2));
     } catch (error) {
-        console.error("❌ Error en la búsqueda:", error.message);
+        console.error(JSON.stringify({ error: error.message }, null, 2));
     }
 }
 
+// Recibir argumentos desde el frontend o GitHub Actions
 const args = process.argv.slice(2);
 if (args.length < 2) {
-    console.error("Uso: node buscar.mjs <organizacion> <query>");
+    console.error(JSON.stringify({ error: "Uso: node buscar.mjs <organizacion> <query>" }, null, 2));
     process.exit(1);
 }
 
